@@ -1,4 +1,4 @@
-import { connectToDatabase } from '@/types/database/mongoose';
+import { connectToDatabase } from '@/database/mongoose';
 import mongoose from 'mongoose';
 
 export async function GET() {

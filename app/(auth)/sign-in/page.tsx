@@ -1,11 +1,16 @@
-'use client'
+'use client';
 
-import FooterLink from "@/components/forms/FooterLink"
-import InputField from "@/components/forms/InputField"
-import { Button } from "@/components/ui/button"
-import { useForm } from "react-hook-form"
+import FooterLink from '@/components/forms/FooterLink';
+import InputField from '@/components/forms/InputField';
+import { Button } from '@/components/ui/button';
+import { signInWithEmail } from '@/lib/actions/auth.actions';
+import { useRouter } from 'next/navigation';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 
 const SignIn = () => {
+  const router = useRouter();
+
   const {
     register,
     handleSubmit,
@@ -15,16 +20,20 @@ const SignIn = () => {
       email: '',
       password: '',
     },
-    mode: 'onBlur'
-  })
+    mode: 'onBlur',
+  });
 
   const onSubmit = async (data: SignInFormData) => {
     try {
-      console.log(data)
+      const result = await signInWithEmail(data);
+      if (result.success) router.push('/');
     } catch (e) {
-      console.log(e)
+      console.log(e);
+      toast.error('Sign in failed', {
+        description: e instanceof Error ? e.message : 'Failed to sign in',
+      });
     }
-  }
+  };
 
   return (
     <>
@@ -55,16 +64,14 @@ const SignIn = () => {
           validation={{ required: 'Password is required' }}
         />
 
-        <Button type="submit" disabled={isSubmitting} className="yellow-btn w-full mt-5">
+        <Button type="submit" disabled={isSubmitting} className="yellow-btn mt-5 w-full">
           {isSubmitting ? 'Signing in...' : 'Sign In'}
         </Button>
 
-        <FooterLink
-          text="Don't have an account?" linkText="Sign up" href="/sign-up"
-        />
+        <FooterLink text="Don't have an account?" linkText="Sign up" href="/sign-up" />
       </form>
     </>
-  )
-}
+  );
+};
 
-export default SignIn
+export default SignIn;

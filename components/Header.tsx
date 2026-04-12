@@ -1,12 +1,12 @@
-import Image from "next/image"
-import Link from "next/link"
-import NavItems from "./NavItems"
-import UserDropdown from "./UserDropdown"
+import Image from 'next/image';
+import Link from 'next/link';
+import NavItems from './NavItems';
+import UserDropdown from './UserDropdown';
 
-const Header = () => {
+const Header = ({ user }: { user: User }) => {
   return (
-    <header className="sticky top-0 header">
-      <div className="container header-wrapper">
+    <header className="header sticky top-0">
+      <div className="header-wrapper container">
         <Link href="/">
           <Image
             src="/assets/icons/logo.svg"
@@ -19,10 +19,10 @@ const Header = () => {
         <nav className="hidden sm:block">
           <NavItems />
         </nav>
-        <UserDropdown />
+        <UserDropdown user={user} />
       </div>
     </header>
-  )
-}
+  );
+};
 
-export default Header
+export default Header;
