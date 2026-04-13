@@ -74,7 +74,12 @@ export const calculateNewsDistribution = (symbolsCount: number) => {
 
 // Check for required article fields
 export const validateArticle = (article: RawNewsArticle) =>
-  article.headline && article.summary && article.url && article.datetime;
+  Boolean(
+    article.datetime &&
+      article.headline?.trim() &&
+      article.summary?.trim() &&
+      article.url?.trim()
+  );
 
 // Get today's date string in YYYY-MM-DD format
 export const getTodayString = () => new Date().toISOString().split('T')[0];
