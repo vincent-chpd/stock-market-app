@@ -3,7 +3,7 @@
 import { formatArticle, getDateRange, validateArticle } from '@/lib/utils';
 
 const FINNHUB_BASE_URL = 'https://finnhub.io/api/v1';
-const NEXT_PUBLIC_FINNHUB_API_KEY = process.env.NEXT_PUBLIC_FINNHUB_API_KEY;
+const FINNHUB_API_KEY = process.env.FINNHUB_API_KEY;
 
 async function fetchJSON<T>(url: string, revalidateSeconds?: number): Promise<T> {
   const res = await fetch(url, {
@@ -28,7 +28,7 @@ export async function getNews(symbols?: string[]): Promise<MarketNewsArticle[]> 
 
       for (let round = 0; round < maxRounds; round++) {
         const symbol = cleanedSymbols[round % cleanedSymbols.length];
-        const url = `${FINNHUB_BASE_URL}/company-news?symbol=${symbol}&from=${from}&to=${to}&token=${NEXT_PUBLIC_FINNHUB_API_KEY}`;
+        const url = `${FINNHUB_BASE_URL}/company-news?symbol=${symbol}&from=${from}&to=${to}&token=${FINNHUB_API_KEY}`;
 
         const raw = await fetchJSON<RawNewsArticle[]>(url);
 
@@ -41,7 +41,7 @@ export async function getNews(symbols?: string[]): Promise<MarketNewsArticle[]> 
       return articles.sort((a, b) => b.datetime - a.datetime);
     }
 
-    const url = `${FINNHUB_BASE_URL}/news?category=general&token=${NEXT_PUBLIC_FINNHUB_API_KEY}`;
+    const url = `${FINNHUB_BASE_URL}/news?category=general&token=${FINNHUB_API_KEY}`;
     const raw = await fetchJSON<RawNewsArticle[]>(url);
 
     const seen = new Set<string>();

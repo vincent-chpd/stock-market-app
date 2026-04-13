@@ -6,8 +6,10 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export const formatTimeAgo = (timestamp: number) => {
-  const now = Date.now();
-  const diffInMs = now - timestamp * 1000; // Convert to milliseconds
+  const diffInMs = Date.now() - timestamp * 1000;
+
+  if (diffInMs <= 60_000) return 'just now';
+
   const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
   const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
 
@@ -58,7 +60,7 @@ export const getTodayDateRange = () => {
 // Calculate news per symbol based on watchlist size
 export const calculateNewsDistribution = (symbolsCount: number) => {
   let itemsPerSymbol: number;
-  let targetNewsCount = 6;
+  const targetNewsCount = 6;
 
   if (symbolsCount < 3) {
     itemsPerSymbol = 3; // Fewer symbols, more news each
@@ -66,7 +68,6 @@ export const calculateNewsDistribution = (symbolsCount: number) => {
     itemsPerSymbol = 2; // Exactly 3 symbols, 2 news each = 6 total
   } else {
     itemsPerSymbol = 1; // Many symbols, 1 news each
-    targetNewsCount = 6; // Don't exceed 6 total
   }
 
   return { itemsPerSymbol, targetNewsCount };
@@ -84,17 +85,31 @@ export const validateArticle = (article: RawNewsArticle) =>
 // Get today's date string in YYYY-MM-DD format
 export const getTodayString = () => new Date().toISOString().split('T')[0];
 
-export const formatArticle = (article: RawNewsArticle, isCompanyNews: boolean, symbol?: string, index: number = 0) => ({
-  id: isCompanyNews ? Date.now() + Math.random() : article.id + index,
-  headline: article.headline!.trim(),
-  summary: article.summary!.trim().substring(0, isCompanyNews ? 200 : 150) + '...',
-  source: article.source || (isCompanyNews ? 'Company News' : 'Market News'),
-  url: article.url!,
-  datetime: article.datetime!,
-  image: article.image || '',
-  category: isCompanyNews ? 'company' : article.category || 'general',
-  related: isCompanyNews ? symbol! : article.related || '',
-});
+export const formatArticle = (article: RawNewsArticle, isCompanyNews: boolean, symbol?: string, index: number = 0) => {
+  const maxLength = isCompanyNews ? 200 : 150;
+  const trimmed = article.summary!.trim();
+  const summary = trimmed.length > maxLength ? trimmed.substring(0, maxLength) + '...' : trimmed;
+
+  const id = isCompanyNews
+    ? typeof crypto !== 'undefined' && crypto.randomUUID
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}`
+    : article.id + index;
+
+  const related = isCompanyNews ? (symbol ?? '') : article.related || '';
+
+  return {
+    id,
+    headline: article.headline!.trim(),
+    summary,
+    source: article.source || (isCompanyNews ? 'Company News' : 'Market News'),
+    url: article.url!,
+    datetime: article.datetime!,
+    image: article.image || '',
+    category: isCompanyNews ? 'company' : article.category || 'general',
+    related,
+  };
+};
 
 export const formatChangePercent = (changePercent?: number) => {
   if (changePercent === undefined || changePercent === null) return '';
@@ -116,24 +131,16 @@ export const formatPrice = (price: number) => {
   }).format(price);
 };
 
-export const formatDateToday = new Date().toLocaleDateString('en-US', {
-  weekday: 'long',
-  year: 'numeric',
-  month: 'long',
-  day: 'numeric',
-  timeZone: 'UTC',
-});
-
-export const getAlertText = (alert: Alert) => {
-  const condition = alert.alertType === 'upper' ? '>' : '<';
-  return `Price ${condition} ${formatPrice(alert.threshold)}`;
-};
-
-export const getFormattedTodayDate = () =>
-  new Date().toLocaleDateString('en-US', {
+export const formatDateToday = () =>
+  new Date().toLocaleDateString('en-GB', {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
     day: 'numeric',
     timeZone: 'UTC',
   });
+
+export const getAlertText = (alert: Alert) => {
+  const condition = alert.alertType === 'upper' ? '>' : '<';
+  return `Price ${condition} ${formatPrice(alert.threshold)}`;
+};
