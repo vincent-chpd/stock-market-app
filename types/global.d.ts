@@ -67,6 +67,12 @@ declare global {
     intro: string;
   };
 
+  type SummaryEmailData = {
+    email: string;
+    date: string;
+    newsContent: string;
+  };
+
   type User = {
     id: string;
     name: string;
@@ -153,7 +159,7 @@ declare global {
   };
 
   type MarketNewsArticle = {
-    id: number;
+    id: string | number;
     headline: string;
     summary: string;
     source: string;

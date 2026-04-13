@@ -1,6 +1,146 @@
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
+import { clsx, type ClassValue } from 'clsx';
+import { twMerge } from 'tailwind-merge';
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
+  return twMerge(clsx(inputs));
 }
+
+export const formatTimeAgo = (timestamp: number) => {
+  const diffInMs = Date.now() - timestamp * 1000;
+
+  if (diffInMs <= 60_000) return 'just now';
+
+  const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+  const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+
+  if (diffInHours > 24) {
+    const days = Math.floor(diffInHours / 24);
+    return `${days} day${days > 1 ? 's' : ''} ago`;
+  } else if (diffInHours >= 1) {
+    return `${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`;
+  } else {
+    return `${diffInMinutes} minute${diffInMinutes > 1 ? 's' : ''} ago`;
+  }
+};
+
+export function delay(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+// Formatted string like "$3.10T", "$900.00B", "$25.00M" or "$999,999.99"
+export function formatMarketCapValue(marketCapUsd: number): string {
+  if (!Number.isFinite(marketCapUsd) || marketCapUsd <= 0) return 'N/A';
+
+  if (marketCapUsd >= 1e12) return `$${(marketCapUsd / 1e12).toFixed(2)}T`; // Trillions
+  if (marketCapUsd >= 1e9) return `$${(marketCapUsd / 1e9).toFixed(2)}B`; // Billions
+  if (marketCapUsd >= 1e6) return `$${(marketCapUsd / 1e6).toFixed(2)}M`; // Millions
+  return `$${marketCapUsd.toFixed(2)}`; // Below one million, show full USD amount
+}
+
+export const getDateRange = (days: number) => {
+  const toDate = new Date();
+  const fromDate = new Date();
+  fromDate.setDate(toDate.getDate() - days);
+  return {
+    to: toDate.toISOString().split('T')[0],
+    from: fromDate.toISOString().split('T')[0],
+  };
+};
+
+// Get today's date range (from today to today)
+export const getTodayDateRange = () => {
+  const today = new Date();
+  const todayString = today.toISOString().split('T')[0];
+  return {
+    to: todayString,
+    from: todayString,
+  };
+};
+
+// Calculate news per symbol based on watchlist size
+export const calculateNewsDistribution = (symbolsCount: number) => {
+  let itemsPerSymbol: number;
+  const targetNewsCount = 6;
+
+  if (symbolsCount < 3) {
+    itemsPerSymbol = 3; // Fewer symbols, more news each
+  } else if (symbolsCount === 3) {
+    itemsPerSymbol = 2; // Exactly 3 symbols, 2 news each = 6 total
+  } else {
+    itemsPerSymbol = 1; // Many symbols, 1 news each
+  }
+
+  return { itemsPerSymbol, targetNewsCount };
+};
+
+// Check for required article fields
+export const validateArticle = (article: RawNewsArticle) =>
+  Boolean(
+    article.datetime &&
+      article.headline?.trim() &&
+      article.summary?.trim() &&
+      article.url?.trim()
+  );
+
+// Get today's date string in YYYY-MM-DD format
+export const getTodayString = () => new Date().toISOString().split('T')[0];
+
+export const formatArticle = (article: RawNewsArticle, isCompanyNews: boolean, symbol?: string, index: number = 0) => {
+  const maxLength = isCompanyNews ? 200 : 150;
+  const trimmed = article.summary!.trim();
+  const summary = trimmed.length > maxLength ? trimmed.substring(0, maxLength) + '...' : trimmed;
+
+  const id = isCompanyNews
+    ? typeof crypto !== 'undefined' && crypto.randomUUID
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}`
+    : article.id + index;
+
+  const related = isCompanyNews ? (symbol ?? '') : article.related || '';
+
+  return {
+    id,
+    headline: article.headline!.trim(),
+    summary,
+    source: article.source || (isCompanyNews ? 'Company News' : 'Market News'),
+    url: article.url!,
+    datetime: article.datetime!,
+    image: article.image || '',
+    category: isCompanyNews ? 'company' : article.category || 'general',
+    related,
+  };
+};
+
+export const formatChangePercent = (changePercent?: number) => {
+  if (changePercent === undefined || changePercent === null) return '';
+  const sign = changePercent > 0 ? '+' : '';
+  return `${sign}${changePercent.toFixed(2)}%`;
+};
+
+export const getChangeColorClass = (changePercent?: number) => {
+  if (changePercent === undefined || changePercent === null) return 'text-gray-400';
+  if (changePercent === 0) return 'text-gray-400';
+  return changePercent > 0 ? 'text-green-500' : 'text-red-500';
+};
+
+export const formatPrice = (price: number) => {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 2,
+  }).format(price);
+};
+
+export const formatDateToday = () =>
+  new Date().toLocaleDateString('en-GB', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    timeZone: 'UTC',
+  });
+
+export const getAlertText = (alert: Alert) => {
+  const condition = alert.alertType === 'upper' ? '>' : '<';
+  return `Price ${condition} ${formatPrice(alert.threshold)}`;
+};
