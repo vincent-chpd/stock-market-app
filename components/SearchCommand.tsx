@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Command, CommandDialog, CommandEmpty, CommandInput, CommandList } from '@/components/ui/command';
 import { Button } from './ui/button';
 import { Loader2, Star, TrendingUp } from 'lucide-react';
@@ -17,17 +17,21 @@ const SearchCommand = ({ renderAs = 'button', label = 'Add stock', initialStocks
   const isSearchMode = !!searchTerm.trim();
   const displayStocks = isSearchMode ? stocks : stocks?.slice(0, 10);
 
+  const latestRequestId = useRef(0);
+
   const handleSearch = async () => {
     if (!isSearchMode) return setStocks(initialStocks);
+
+    const requestId = latestRequestId.current;
 
     setLoading(true);
     try {
       const result = await searchStocks(searchTerm.trim());
-      setStocks(result);
+      if (requestId === latestRequestId.current) setStocks(result);
     } catch {
-      setStocks([]);
+      if (requestId === latestRequestId.current) setStocks([]);
     } finally {
-      setLoading(false);
+      if (requestId === latestRequestId.current) setLoading(false);
     }
   };
 
@@ -57,9 +61,9 @@ const SearchCommand = ({ renderAs = 'button', label = 'Add stock', initialStocks
   return (
     <>
       {renderAs === 'text' ? (
-        <span onClick={() => setOpen(true)} className="search-text">
+        <button type="button" onClick={() => setOpen(true)} className="search-text">
           {label}
-        </span>
+        </button>
       ) : (
         <Button onClick={() => setOpen(true)} className="search-btn">
           {label}
@@ -82,9 +86,9 @@ const SearchCommand = ({ renderAs = 'button', label = 'Add stock', initialStocks
                   {isSearchMode ? 'Search results' : 'Popular stocks'}({displayStocks?.length || 0})
                 </div>
                 {displayStocks?.map((stock, i) => (
-                  <li key={stock.symbol} className="search-item">
+                  <li key={`${stock.symbol} - ${i}`} className="search-item">
                     <Link href={`/stocks/${stock.symbol}`} onClick={handleSelectStock} className="search-item-link">
-                      <TrendingUp className="text-500 h-4 w-4" />
+                      <TrendingUp className="h-4 w-4 text-gray-500" />
                       <div className="flex-1">
                         <div className="search-item-name">{stock.name}</div>
                         <div className="text-sm text-gray-500">
