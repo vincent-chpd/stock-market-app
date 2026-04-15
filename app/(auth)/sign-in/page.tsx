@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { signInWithEmail } from '@/lib/actions/auth.actions';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
-import { toast } from 'sonner';
 
 const SignIn = () => {
   const router = useRouter();
@@ -14,6 +13,7 @@ const SignIn = () => {
   const {
     register,
     handleSubmit,
+    setError,
     formState: { errors, isSubmitting },
   } = useForm<SignInFormData>({
     defaultValues: {
@@ -26,12 +26,14 @@ const SignIn = () => {
   const onSubmit = async (data: SignInFormData) => {
     try {
       const result = await signInWithEmail(data);
-      if (result.success) router.push('/');
+      if (result.success) {
+        router.push('/');
+      } else {
+        setError('root', { message: 'Invalid email or password' });
+      }
     } catch (e) {
       console.log(e);
-      toast.error('Sign in failed', {
-        description: e instanceof Error ? e.message : 'Failed to sign in',
-      });
+      setError('root', { message: 'Invalid email or password' });
     }
   };
 
@@ -63,6 +65,8 @@ const SignIn = () => {
           error={errors.password}
           validation={{ required: 'Password is required' }}
         />
+
+        {errors.root && <p className="text-sm text-red-500">{errors.root.message}</p>}
 
         <Button type="submit" disabled={isSubmitting} className="yellow-btn mt-5 w-full">
           {isSubmitting ? 'Signing in...' : 'Sign In'}
